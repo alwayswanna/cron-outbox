@@ -1,9 +1,24 @@
+profile: prod
+
 app:
   port: 8003
 
 kafka:
-  host: localhost
-  port: 9092
+  delivery-timeout: 15000
+  servers:
+    - host: localhost
+      port: 29092
+    - host: localhost
+      port: 29093
+    - host: localhost
+      port: 29094
+  producers:
+    - topic-name: article
+      transaction-id: article-tx-1
+      enable-idempotence: true
+      client-id: article-pr-1
+      retries: 3
+      ack: all
 
 database:
   host: localhost
@@ -11,3 +26,6 @@ database:
   database-name: cron-outbox
   username: postgres
   password: postgres
+
+cron:
+  outbox-message-scheduler: "@every 30s"

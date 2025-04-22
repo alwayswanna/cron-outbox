@@ -1,6 +1,6 @@
 package model
 
 type ArticleRequest struct {
-	Title       string
-	Description string
+	Title       string `json:"title"`
+	Description string `json:"description"`
 }
