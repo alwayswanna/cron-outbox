@@ -8,13 +8,23 @@ package wire
 
 import (
 	"cron-outbox/internal/configuration"
+	"cron-outbox/internal/cron"
+	"cron-outbox/internal/db"
+	"cron-outbox/internal/db/repository"
 	"cron-outbox/internal/server"
+	"cron-outbox/internal/service"
 )
 
 // Injectors from wire.go:
 
 func InitializeArticleService() (*server.App, error) {
 	properties := configuration.NewProperties()
-	app := server.NewApp(properties)
+	databaseConnection := db.NewDatabaseConnection(properties)
+	articleRepositoryImpl := repository.NewArticleRepository(databaseConnection)
+	outboxMessageRepositoryImpl := repository.NewOutboxMessageRepository(databaseConnection)
+	kafkaProducerService := service.NewKafkaProducerService(properties)
+	articleServiceImpl := service.NewArticleService(properties, articleRepositoryImpl, outboxMessageRepositoryImpl, databaseConnection, kafkaProducerService)
+	appCron := cron.NewOutBoxMessageScheduler(properties, articleServiceImpl)
+	app := server.NewApp(properties, articleServiceImpl, appCron)
 	return app, nil
 }

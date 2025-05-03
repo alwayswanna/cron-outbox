@@ -14,7 +14,9 @@ type ArticleRepositoryImpl struct {
 }
 
 func (a *ArticleRepositoryImpl) Save(article entity.Article) (entity.Article, error) {
-	panic("implement me")
+	gorm := a.db.GetDB()
+	gorm.Create(&article)
+	return article, nil
 }
 
 func NewArticleRepository(db *db.DatabaseConnection) *ArticleRepositoryImpl {
