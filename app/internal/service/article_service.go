@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+const ArticleTopicName = "article"
+
 type ArticleService interface {
 	ProceedSaveArticle(article model.ArticleRequest) error
 	ProceedSendArticle()
@@ -68,12 +70,20 @@ func (a ArticleServiceImpl) ProceedSendArticle() {
 	}
 
 	if len(articleWhereIsSentFalse) == 0 {
-		log.Info().Msg("no message to send")
+		log.Info().Msg("there are no article to send")
 		return
 	} else {
 		log.Info().Int("count", len(articleWhereIsSentFalse)).Msg("found articles to send")
 	}
 
+	/* check producer status, and attempt to recreate if closed */
+	err = a.kafkaProducerService.PrepareToSendMessage(ArticleTopicName)
+	if err != nil {
+		log.Err(err).Msgf("producer for topic %s is closed or not exists", ArticleTopicName)
+		return
+	}
+
+	/* process slice of articles */
 	for _, article := range articleWhereIsSentFalse {
 		err := a.databaseConnection.GetDB().Transaction(func(tx *gorm.DB) error {
 
@@ -89,13 +99,12 @@ func (a ArticleServiceImpl) ProceedSendArticle() {
 			err := a.kafkaProducerService.SendMessageToTopicInTransaction(
 				article.Id.String(),
 				article.Message,
-				"article",
+				ArticleTopicName,
 				tx,
 			)
 
 			if err != nil {
 				tx.Rollback()
-				log.Err(err).Msg("failed to send message to topic")
 				return err
 			}
 			return nil
@@ -103,10 +112,7 @@ func (a ArticleServiceImpl) ProceedSendArticle() {
 
 		if err != nil {
 			log.Err(err).Msg("failed to send message to topic")
-			continue
 		}
-
-		log.Info().Msgf("successfully sent message to topic %s", article.Id.String())
 	}
 }
 
