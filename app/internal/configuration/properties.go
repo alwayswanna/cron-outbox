@@ -14,14 +14,7 @@ type Properties struct {
 			Host string `mapstructure:"host"`
 			Port int32  `mapstructure:"port"`
 		} `mapstructure:"servers"`
-		Producers []struct {
-			TopicName         string `mapstructure:"topic-name"`
-			TransactionID     string `mapstructure:"transaction-id"`
-			EnableIdempotence bool   `mapstructure:"enable-idempotence"`
-			ClientId          string `mapstructure:"client-id"`
-			Retries           int    `mapstructure:"retries"`
-			Ack               string `mapstructure:"ack"`
-		} `mapstructure:"producers"`
+		Producers []Producers `mapstructure:"producers"`
 	} `mapstructure:"kafka"`
 
 	AppProperties struct {
@@ -41,6 +34,15 @@ type Properties struct {
 	} `mapstructure:"cron"`
 
 	Profile string `mapstructure:"profile"`
+}
+
+type Producers struct {
+	TopicName         string `mapstructure:"topic-name"`
+	TransactionID     string `mapstructure:"transaction-id"`
+	EnableIdempotence bool   `mapstructure:"enable-idempotence"`
+	ClientId          string `mapstructure:"client-id"`
+	Retries           int    `mapstructure:"retries"`
+	Ack               string `mapstructure:"ack"`
 }
 
 func (p *Properties) GetKafkaBootstrapServers() string {
